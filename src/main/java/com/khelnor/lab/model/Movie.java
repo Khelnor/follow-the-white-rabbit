@@ -1,4 +1,4 @@
-package com.khelnor.lab.event.model;
+package com.khelnor.lab.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

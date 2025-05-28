@@ -17,20 +17,25 @@ import java.util.UUID;
 @AllArgsConstructor
 public class MessageProducer {
 
-    private final RabbitTemplate rabbitTemplate;
     private final RabbitTemplate rabbitTemplateJson;
+    private final RabbitTemplate rabbitTemplate;
 
-    public void sendMessage(String message) {
-        rabbitTemplate.convertAndSend(RabbitMQConfig.QUEUE_NAME, message);
-
-    }
-
-    public void sendObject(Object object) {
-        rabbitTemplate.convertAndSend(RabbitMQConfig.QUEUE_NAME, object);
+    public void sendError(Object object) {
+        MessageProperties messageProperties = new MessageProperties();
+        messageProperties.setMessageId(UUID.randomUUID().toString());
+        messageProperties.setAppId("ERROR"); // Setting application-id
+        messageProperties.setTimestamp(new Date()); // Setting timestamp
+        Message message = new Message(rabbitTemplateJson.getMessageConverter().toMessage(object, messageProperties).getBody(), messageProperties);
+        rabbitTemplateJson.send(RabbitMQConfig.TEST_EXCHANGE, RabbitMQConfig.TEST_ROUTING_KEY, message);
     }
 
     public void sendJson(Object object) {
-        rabbitTemplateJson.convertAndSend(RabbitMQConfig.QUEUE_NAME, object);
+        MessageProperties messageProperties = new MessageProperties();
+        messageProperties.setMessageId(UUID.randomUUID().toString());
+        messageProperties.setAppId("rabbit-demo"); // Setting application-id
+        messageProperties.setTimestamp(new Date()); // Setting timestamp
+        Message message = new Message(rabbitTemplateJson.getMessageConverter().toMessage(object, messageProperties).getBody(), messageProperties);
+        rabbitTemplateJson.send(RabbitMQConfig.TEST_EXCHANGE, RabbitMQConfig.TEST_ROUTING_KEY, message);
     }
 
     public String sendXml(Object object) throws JsonProcessingException {
@@ -39,10 +44,9 @@ public class MessageProducer {
         messageProperties.setAppId("rabbit-demo"); // Setting application-id
         messageProperties.setTimestamp(new Date()); // Setting timestamp
         XmlMapper xmlMapper = new XmlMapper();
-        String xmlMessage= xmlMapper.writeValueAsString(object);
+        String xmlMessage = xmlMapper.writeValueAsString(object);
         Message message = new Message(xmlMessage.getBytes(StandardCharsets.UTF_8), messageProperties);
-        rabbitTemplate.send(RabbitMQConfig.QUEUE_NAME, message);
+        rabbitTemplate.send(RabbitMQConfig.QUEUE_TEST, message);
         return xmlMessage;
     }
-
 }
