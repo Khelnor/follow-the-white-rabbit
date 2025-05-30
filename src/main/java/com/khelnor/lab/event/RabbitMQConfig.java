@@ -21,6 +21,11 @@ public class RabbitMQConfig {
     public static final String TEST_ROUTING_KEY = "test.route";
     public static final String DLQ_ROUTING_KEY = "dlq.route";
 
+    public static final String QUEUE_TEST2 = "test2";
+    public static final String TEST2_ROUTING_KEY = "test2.route";
+    public static final String QUEUE_RETRY_TEST2 = "retry.test2";
+    public static final String RETRY_TEST2_ROUTING_KEY = "retry.test2.route";
+
     @Bean
     DirectExchange testExchange(){
         return new DirectExchange(TEST_EXCHANGE);
@@ -36,6 +41,23 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(QUEUE_TEST).
                 deadLetterExchange(DLQ_EXCHANGE).
                 deadLetterRoutingKey(DLQ_ROUTING_KEY).
+                build();
+    }
+
+    @Bean
+    public Queue test2Queue() {
+        return QueueBuilder.durable(QUEUE_TEST2).
+                deadLetterExchange(TEST_EXCHANGE).
+                deadLetterRoutingKey(RETRY_TEST2_ROUTING_KEY).
+                build();
+    }
+
+    @Bean
+    public Queue retryTest2Queue() {
+        return QueueBuilder.durable(QUEUE_RETRY_TEST2).
+                ttl(20000).
+                deadLetterExchange(TEST_EXCHANGE).
+                deadLetterRoutingKey(TEST2_ROUTING_KEY).
                 build();
     }
 
@@ -58,6 +80,16 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    Binding test2Binding() {
+        return BindingBuilder.bind(test2Queue()).to(testExchange()).with(TEST2_ROUTING_KEY);
+    }
+
+    @Bean
+    Binding retryTest2Binding() {
+        return BindingBuilder.bind(retryTest2Queue()).to(testExchange()).with(RETRY_TEST2_ROUTING_KEY);
+    }
+
+    @Bean
     public RabbitTemplate rabbitTemplate(CachingConnectionFactory connectionFactory) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         return rabbitTemplate;
@@ -71,7 +103,7 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactoryWithRetryManagedBySpring(ConnectionFactory connectionFactory) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(new Jackson2JsonMessageConverter());
@@ -82,6 +114,17 @@ public class RabbitMQConfig {
                 .backOffOptions(5000, 2.0, 10000) // initialInterval, multiplier, maxInterval
                 .recoverer(new RejectAndDontRequeueRecoverer())
                 .build());
+        return factory;
+    }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(new Jackson2JsonMessageConverter());
+        factory.setConcurrentConsumers(2);
+        factory.setAcknowledgeMode(AcknowledgeMode.AUTO);
+        factory.setDefaultRequeueRejected(false);
         return factory;
     }
 }

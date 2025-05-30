@@ -20,25 +20,25 @@ public class MessageProducer {
     private final RabbitTemplate rabbitTemplateJson;
     private final RabbitTemplate rabbitTemplate;
 
-    public void sendError(Object object) {
+    public void sendError(Object object, String queue) {
         MessageProperties messageProperties = new MessageProperties();
         messageProperties.setMessageId(UUID.randomUUID().toString());
         messageProperties.setAppId("ERROR"); // Setting application-id
         messageProperties.setTimestamp(new Date()); // Setting timestamp
         Message message = new Message(rabbitTemplateJson.getMessageConverter().toMessage(object, messageProperties).getBody(), messageProperties);
-        rabbitTemplateJson.send(RabbitMQConfig.TEST_EXCHANGE, RabbitMQConfig.TEST_ROUTING_KEY, message);
+        routeToQueue(queue, message);
     }
 
-    public void sendJson(Object object) {
+    public void sendJson(Object object, String queue) {
         MessageProperties messageProperties = new MessageProperties();
         messageProperties.setMessageId(UUID.randomUUID().toString());
         messageProperties.setAppId("rabbit-demo"); // Setting application-id
         messageProperties.setTimestamp(new Date()); // Setting timestamp
         Message message = new Message(rabbitTemplateJson.getMessageConverter().toMessage(object, messageProperties).getBody(), messageProperties);
-        rabbitTemplateJson.send(RabbitMQConfig.TEST_EXCHANGE, RabbitMQConfig.TEST_ROUTING_KEY, message);
+        routeToQueue(queue, message);
     }
 
-    public String sendXml(Object object) throws JsonProcessingException {
+    public String sendXml(Object object, String queue) throws JsonProcessingException {
         MessageProperties messageProperties = new MessageProperties();
         messageProperties.setMessageId(UUID.randomUUID().toString());
         messageProperties.setAppId("rabbit-demo"); // Setting application-id
@@ -46,7 +46,16 @@ public class MessageProducer {
         XmlMapper xmlMapper = new XmlMapper();
         String xmlMessage = xmlMapper.writeValueAsString(object);
         Message message = new Message(xmlMessage.getBytes(StandardCharsets.UTF_8), messageProperties);
-        rabbitTemplate.send(RabbitMQConfig.QUEUE_TEST, message);
+        routeToQueue(queue, message);
         return xmlMessage;
+    }
+
+    private void routeToQueue(String queue, Message message){
+        if(RabbitMQConfig.QUEUE_TEST.equalsIgnoreCase(queue)) {
+            rabbitTemplateJson.send(RabbitMQConfig.TEST_EXCHANGE, RabbitMQConfig.TEST_ROUTING_KEY, message);
+        }
+        else {
+            rabbitTemplateJson.send(RabbitMQConfig.TEST_EXCHANGE, RabbitMQConfig.TEST2_ROUTING_KEY, message);
+        }
     }
 }
