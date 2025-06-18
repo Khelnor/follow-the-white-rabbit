@@ -2,7 +2,7 @@ package com.khelnor.lab.event.producer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.khelnor.lab.event.RabbitMQConfig;
+import com.khelnor.lab.event.configuration.RabbitDemoQueueConfig;
 import lombok.AllArgsConstructor;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
@@ -51,11 +51,11 @@ public class MessageProducer {
     }
 
     private void routeToQueue(String queue, Message message){
-        if(RabbitMQConfig.QUEUE_TEST.equalsIgnoreCase(queue)) {
-            rabbitTemplateJson.send(RabbitMQConfig.TEST_EXCHANGE, RabbitMQConfig.TEST_ROUTING_KEY, message);
+        if(RabbitDemoQueueConfig.QUEUE_TEST.equalsIgnoreCase(queue)) {
+            rabbitTemplateJson.send(RabbitDemoQueueConfig.TEST_EXCHANGE, RabbitDemoQueueConfig.TEST_ROUTING_KEY, message);
         }
         else {
-            rabbitTemplateJson.send(RabbitMQConfig.TEST_EXCHANGE, RabbitMQConfig.TEST2_ROUTING_KEY, message);
+            rabbitTemplateJson.send(RabbitDemoQueueConfig.TEST_EXCHANGE, RabbitDemoQueueConfig.TEST2_ROUTING_KEY, message);
         }
     }
 }
