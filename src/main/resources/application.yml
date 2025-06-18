@@ -1,8 +1,22 @@
 spring:
   application:
     name: rabbit-demo
-  rabbitmq:
+
+  security:
+    oauth2:
+      client:
+        registration:
+          rabbitmq-client:
+            client-id: myapp
+            client-secret: mysecret
+            authorization-grant-type: client_credentials
+            provider: my-oauth-provider
+
+        provider:
+          my-oauth-provider:
+            token-uri: https://myprovider/token
+
+rabbitmq:
     host: localhost
     port: 5672
-    username: guest
-    password: guest
+    vhost: dev-domain1
